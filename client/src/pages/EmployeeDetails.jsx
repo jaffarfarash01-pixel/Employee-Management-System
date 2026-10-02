@@ -7,6 +7,8 @@ function EmployeeDetails() {
 
   const [employee, setEmployee] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [attendance, setAttendance] = useState([]);
+  const [leave, setLeaves] = useState([]);
 
   const fetchEmployee = async () => {
     const token = localStorage.getItem("token");
