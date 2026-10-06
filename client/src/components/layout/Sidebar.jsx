@@ -11,17 +11,16 @@ import {
   Settings,
   LogOut,
   ChevronDown,
+  FolderKanban,
 } from "lucide-react";
 import { useState } from "react";
 
 function Sidebar({ collapsed, mobileOpen, closeMobile }) {
-  
   const navigate = useNavigate();
 
   const [employeesOpen, setEmployeesOpen] = useState(false);
   const [attendanceOpen, setAttendanceOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
-
 
   const role = localStorage.getItem("role");
 
@@ -111,14 +110,27 @@ function Sidebar({ collapsed, mobileOpen, closeMobile }) {
 
           {/* Departments */}
           {(role === "admin" || role === "manager") && (
-            <NavLink to="/departments"
-            className="sidebar-link"
-            onClick={closeMobile}
+            <NavLink
+              to="/departments"
+              className="sidebar-link"
+              onClick={closeMobile}
             >
-
               <Building2 size={20} />
 
               {!collapsed && <span>Departments</span>}
+            </NavLink>
+          )}
+
+          {/* Projects */}
+          {(role === "admin" || role === "manager") && (
+            <NavLink
+              to="/projects"
+              className="sidebar-link"
+              onClick={closeMobile}
+            >
+              <FolderKanban size={20} />
+
+              {!collapsed && <span>Projects</span>}
             </NavLink>
           )}
 

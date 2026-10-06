@@ -23,6 +23,9 @@ import CreateAnnouncement from "./pages/CreateAnnouncement";
 import MyAttendance from "./pages/MyAttendance";
 import AttendanceDashboard from "./pages/AttendanceDashboard";
 
+import ProjectList from "./pages/ProjectList";
+import AddProject from "./pages/AddProject";
+
 import Layout from "./components/layout/Layout";
 
 function App() {
@@ -242,6 +245,29 @@ function App() {
             <ProtectedRoute allowedRoles={["admin", "manager"]}>
               <Layout>
                 <DepartmentDetails />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Project Routes */}
+        <Route
+          path="/projects"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "manager"]}>
+              <Layout>
+                <ProjectList />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/projects/add"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "manager"]}>
+              <Layout>
+                <AddProject />
               </Layout>
             </ProtectedRoute>
           }

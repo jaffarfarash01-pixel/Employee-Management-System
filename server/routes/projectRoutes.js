@@ -83,7 +83,7 @@ router.get("/", protect, authorize("admin", "manager"), async (req, res) => {
     if (req.user.role === "admin") {
       projects = await Project.find()
         .populate("project", "name description status")
-          .populate("assignedTo", "name email role")
+          .populate("department", "name description manager")
           .populate("assignedBy", "name email role");
     }
 

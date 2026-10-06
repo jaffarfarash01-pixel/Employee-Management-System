@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { FolderKanban } from "lucide-react";
 
 function Sidebar() {
   const user = JSON.parse(localStorage.getItem("user"));
@@ -8,39 +9,73 @@ function Sidebar() {
       <h3>Menu</h3>
 
       <ul>
+        {/* Dashboard */}
         <li>
-          <Link to={`/${user.role}`}>Dashboard</Link>
+          <Link to={`/${user.role}`}>
+            Dashboard
+          </Link>
         </li>
 
+        {/* Employee Menu */}
         {user.role === "employee" && (
           <>
             <li>
-              <Link to="/employee/apply-leave">Apply Leave</Link>
+              <Link to="/employee/apply-leave">
+                Apply Leave
+              </Link>
             </li>
 
             <li>
-              <Link to="/employee/my-leaves">My Leaves</Link>
+              <Link to="/employee/my-leaves">
+                My Leaves
+              </Link>
             </li>
           </>
         )}
 
-        {(user.role === "admin" || user.role === "manager") && (
+        {/* Admin / Manager Menu */}
+        {(user.role === "admin" ||
+          user.role === "manager") && (
           <>
             <li>
-              <Link to={`/${user.role}/leaves`}>Leave Requests</Link>
+              <Link to={`/${user.role}/leaves`}>
+                Leave Requests
+              </Link>
             </li>
+
             <li>
-              <Link to="/create-announcement">Announcements</Link>
+              <Link to="/create-announcement">
+                Announcements
+              </Link>
             </li>
+
             <li>
-              <Link to="/employees">Employees</Link>
+              <Link to="/employees">
+                Employees
+              </Link>
+            </li>
+
+            <li>
+              <Link to="/departments">
+                Departments
+              </Link>
+            </li>
+
+            {/* Projects */}
+            <li>
+              <Link to="/projects">
+                <FolderKanban size={18} />
+                Projects
+              </Link>
+            </li>
+
+            <li>
+              <Link to="/tasks">
+                Tasks
+              </Link>
             </li>
           </>
         )}
-
-        <li>Departments</li>
-        <li>Projects</li>
-        <li>Tasks</li>
       </ul>
     </aside>
   );
