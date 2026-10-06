@@ -1773,3 +1773,39 @@
     width: 100%;
   }
 }
+/* Employee Actions */
+
+.employee-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.employee-actions button {
+  padding: 6px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  background: #ffffff;
+  color: #374151;
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.employee-actions button:hover {
+  background: #f3f4f6;
+}
+
+.employee-actions .delete-action {
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.employee-actions .delete-action:hover {
+  background: #fee2e2;
+}
+
+@media (max-width: 768px) {
+  .employee-actions {
+    flex-wrap: wrap;
+  }
+}

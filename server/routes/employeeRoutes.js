@@ -7,7 +7,7 @@ const { protect, authorize } = require("../middleware/authMiddlware");
 const router = express.Router();
 
 // create employee
-router.post("/", protect, authorize("admin"), async (req, res) => {
+router.post("/", protect, authorize("admin", "manager"), async (req, res) => {
   try {
     const { userId, employeeId, phone, department, position, joiningDate } =
       req.body;
@@ -195,7 +195,7 @@ router.put("/:id", protect, authorize("admin", "manager"), async (req, res) => {
 // Delete employee
 router.delete("/:id", protect, authorize("admin"), async (req, res) => {
   try {
-    const employee = await Employee.findByIdAndDelete(req.params.id);
+    const employee = await Employee.findById(req.params.id);
 
     if (!employee) {
       return res.status(404).json({
@@ -210,12 +210,13 @@ router.delete("/:id", protect, authorize("admin"), async (req, res) => {
     await User.findByIdAndDelete(employee.userId);
 
     res.json({
-      message: "Employee and user account deleted successfully",
+      message: "Employee deleted successfully",
     });
   } catch (error) {
+    console.error(error);
+
     res.status(500).json({
       message: "Server error",
-      error: error.message,
     });
   }
 });

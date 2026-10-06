@@ -12,18 +12,17 @@ function EmployeeList() {
   const [departmentFilter, setDepartmentFilter] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
 
+  const role = localStorage.getItem("role");
+
   const fetchEmployees = async () => {
     const token = localStorage.getItem("token");
 
     try {
-      const response = await fetch(
-        "http://localhost:5000/api/employees",
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
+      const response = await fetch("http://localhost:5000/api/employees", {
+        headers: {
+          Authorization: `Bearer ${token}`,
         },
-      );
+      });
 
       const data = await response.json();
 
@@ -53,32 +52,17 @@ function EmployeeList() {
     const searchText = search.toLowerCase();
 
     const matchesSearch =
-      employee.employeeId
-        ?.toLowerCase()
-        .includes(searchText) ||
-      employee.userId?.name
-        ?.toLowerCase()
-        .includes(searchText) ||
-      employee.userId?.email
-        ?.toLowerCase()
-        .includes(searchText) ||
-      employee.position
-        ?.toLowerCase()
-        .includes(searchText);
+      employee.employeeId?.toLowerCase().includes(searchText) ||
+      employee.userId?.name?.toLowerCase().includes(searchText) ||
+      employee.userId?.email?.toLowerCase().includes(searchText) ||
+      employee.position?.toLowerCase().includes(searchText);
 
     const matchesDepartment =
-      !departmentFilter ||
-      employee.department?._id === departmentFilter;
+      !departmentFilter || employee.department?._id === departmentFilter;
 
-    const matchesStatus =
-      !statusFilter ||
-      employee.status === statusFilter;
+    const matchesStatus = !statusFilter || employee.status === statusFilter;
 
-    return (
-      matchesSearch &&
-      matchesDepartment &&
-      matchesStatus
-    );
+    return matchesSearch && matchesDepartment && matchesStatus;
   });
 
   // Get unique departments
@@ -86,10 +70,7 @@ function EmployeeList() {
     .filter((employee) => employee.department)
     .reduce((unique, employee) => {
       if (
-        !unique.some(
-          (department) =>
-            department._id === employee.department._id,
-        )
+        !unique.some((department) => department._id === employee.department._id)
       ) {
         unique.push(employee.department);
       }
@@ -97,13 +78,52 @@ function EmployeeList() {
       return unique;
     }, []);
 
+  // delete employee
+  const handleDelete = async (employeeId) => {
+    const confirmDelete = window.confirm(
+      "Are you sure you want to delete this employee?",
+    );
+
+    if (!confirmDelete) {
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+
+    try {
+      const response = await fetch(
+        `http://localhost:5000/api/employees/${employeeId}`,
+        {
+          method: "DELETE",
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message);
+        return;
+      }
+
+      alert("Employee deleted successfully");
+
+      // Refresh employee list
+      fetchEmployees();
+    } catch (error) {
+      console.error(error);
+      alert("Server connection failed");
+    }
+  };
+
   if (loading) {
     return <p>Loading employees...</p>;
   }
 
   return (
     <div className="admin-dashboard employee-list-page">
-
       {/* =========================
           Header
       ========================= */}
@@ -112,14 +132,10 @@ function EmployeeList() {
         <div>
           <h1>Employees</h1>
 
-          <p>
-            Manage your organization's employees
-          </p>
+          <p>Manage your organization's employees</p>
         </div>
 
-        <button
-          onClick={() => navigate("/employees/add")}
-        >
+        <button onClick={() => navigate("/employees/add")}>
           + Add Employee
         </button>
       </div>
@@ -129,7 +145,6 @@ function EmployeeList() {
       ========================= */}
 
       <div className="employee-filters">
-
         {/* Search */}
 
         <input
@@ -143,19 +158,12 @@ function EmployeeList() {
 
         <select
           value={departmentFilter}
-          onChange={(e) =>
-            setDepartmentFilter(e.target.value)
-          }
+          onChange={(e) => setDepartmentFilter(e.target.value)}
         >
-          <option value="">
-            All Departments
-          </option>
+          <option value="">All Departments</option>
 
           {departments.map((department) => (
-            <option
-              key={department._id}
-              value={department._id}
-            >
+            <option key={department._id} value={department._id}>
               {department.name}
             </option>
           ))}
@@ -165,28 +173,18 @@ function EmployeeList() {
 
         <select
           value={statusFilter}
-          onChange={(e) =>
-            setStatusFilter(e.target.value)
-          }
+          onChange={(e) => setStatusFilter(e.target.value)}
         >
-          <option value="">
-            All Status
-          </option>
+          <option value="">All Status</option>
 
-          <option value="active">
-            Active
-          </option>
+          <option value="active">Active</option>
 
-          <option value="inactive">
-            Inactive
-          </option>
+          <option value="inactive">Inactive</option>
         </select>
 
         {/* Clear */}
 
-        {(search ||
-          departmentFilter ||
-          statusFilter) && (
+        {(search || departmentFilter || statusFilter) && (
           <button
             onClick={() => {
               setSearch("");
@@ -204,8 +202,7 @@ function EmployeeList() {
       ========================= */}
 
       <p className="employee-result-count">
-        Showing {filteredEmployees.length} of{" "}
-        {employees.length} employees
+        Showing {filteredEmployees.length} of {employees.length} employees
       </p>
 
       {/* =========================
@@ -216,9 +213,7 @@ function EmployeeList() {
         <div className="empty-state">
           <h3>No employees found</h3>
 
-          <p>
-            Try changing your search or filters.
-          </p>
+          <p>Try changing your search or filters.</p>
         </div>
       ) : (
         <div className="employee-table-card">
@@ -238,48 +233,53 @@ function EmployeeList() {
             <tbody>
               {filteredEmployees.map((employee) => (
                 <tr key={employee._id}>
+                  <td>{employee.employeeId}</td>
+
+                  <td>{employee.userId?.name || "-"}</td>
+
+                  <td>{employee.userId?.email || "-"}</td>
+
+                  <td>{employee.department?.name || "Not assigned"}</td>
+
+                  <td>{employee.position || "-"}</td>
 
                   <td>
-                    {employee.employeeId}
-                  </td>
-
-                  <td>
-                    {employee.userId?.name || "-"}
-                  </td>
-
-                  <td>
-                    {employee.userId?.email || "-"}
-                  </td>
-
-                  <td>
-                    {employee.department?.name ||
-                      "Not assigned"}
-                  </td>
-
-                  <td>
-                    {employee.position || "-"}
-                  </td>
-
-                  <td>
-                    <span
-                      className={`employee-status ${employee.status}`}
-                    >
+                    <span className={`employee-status ${employee.status}`}>
                       {employee.status}
                     </span>
                   </td>
 
                   <td>
-                    <button
-                      onClick={() =>
-                        navigate(
-                          `/employees/${employee._id}`,
-                        )
-                      }
-                    >
-                      View
-                    </button>
-                  </td>
+                    <div className="employee-actions">
+                      {/* View */}
+                      <button
+                        onClick={() => navigate(`/employees/${employee._id}`)}
+                      >
+                        View
+                      </button>
 
+                      {/* Edit - Admin and Manager */}
+                      {(role === "admin" || role === "manager") && (
+                        <button
+                          onClick={() =>
+                            navigate(`/employees/${employee._id}/edit`)
+                          }
+                        >
+                          Edit
+                        </button>
+                      )}
+
+                      {/* Delete - Admin only */}
+                      {role === "admin" && (
+                        <button
+                          className="delete-action"
+                          onClick={() => handleDelete(employee._id)}
+                        >
+                          Delete
+                        </button>
+                      )}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
