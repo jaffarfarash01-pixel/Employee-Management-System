@@ -23,6 +23,7 @@ function ProjectList() {
       );
 
       const data = await response.json();
+      console.log("PROJECTS FROM API:", data);
 
       if (!response.ok) {
         alert(data.message);

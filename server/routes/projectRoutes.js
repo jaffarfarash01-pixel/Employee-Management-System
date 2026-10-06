@@ -8,6 +8,7 @@ const projectOwner = require("../middleware/projectOwner");
 const router = express.Router();
 
 // CREATE PROJECT
+// CREATE PROJECT
 router.post(
   "/",
   protect,
@@ -15,6 +16,9 @@ router.post(
   projectOwner,
   async (req, res) => {
     try {
+      console.log("CREATE PROJECT BODY:", req.body);
+      console.log("LOGGED IN USER:", req.user);
+
       const {
         name,
         description,
@@ -25,6 +29,8 @@ router.post(
         status,
       } = req.body;
 
+      console.log("ABOUT TO CREATE PROJECT");
+
       const project = await Project.create({
         name,
         description,
@@ -34,11 +40,16 @@ router.post(
         endDate,
         status,
       });
+
+      console.log("PROJECT CREATED:", project);
+
       res.json({
         message: "Project Created successfully",
         project,
       });
     } catch (error) {
+      console.error("CREATE PROJECT ERROR:", error);
+
       res.status(500).json({
         message: "Server error",
         error: error.message,
@@ -79,13 +90,12 @@ router.get("/", protect, authorize("admin", "manager"), async (req, res) => {
   try {
     let projects;
 
-    // ADMIN → see all projects
-    if (req.user.role === "admin") {
-      projects = await Project.find()
-        .populate("project", "name description status")
-          .populate("department", "name description manager")
-          .populate("assignedBy", "name email role");
-    }
+  // ADMIN → see all projects
+if (req.user.role === "admin") {
+  projects = await Project.find()
+    .populate("department", "name description manager")
+    .populate("manager", "name email role");
+}
 
     // MANAGER → see only their department projects
     else if (req.user.role === "manager") {
@@ -104,11 +114,9 @@ router.get("/", protect, authorize("admin", "manager"), async (req, res) => {
 
     res.json(projects);
   } catch (error) {
-    res.status(500).json({
-      message: "server error",
-      error: error.message,
-    });
-  }
+  console.error("GET PROJECTS ERROR:", error);
+  res.status(500).json({ message: error.message });
+}
 });
 // UPDATE
 router.put(

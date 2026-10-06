@@ -77,12 +77,29 @@ function AddProject() {
 
   // Handle input changes
   const handleChange = (e) => {
+  const { name, value } = e.target;
+
+  // When department changes,
+  // automatically select its manager
+  if (name === "department") {
+    const selectedDepartment = departments.find(
+      (department) => department._id === value
+    );
+
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      department: value,
+      manager: selectedDepartment?.manager?._id || "",
     });
-  };
 
+    return;
+  }
+
+  setFormData({
+    ...formData,
+    [name]: value,
+  });
+};
   // Create project
   const handleSubmit = async (e) => {
     e.preventDefault();
