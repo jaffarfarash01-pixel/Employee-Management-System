@@ -8,7 +8,6 @@ const projectOwner = require("../middleware/projectOwner");
 const router = express.Router();
 
 // CREATE PROJECT
-// CREATE PROJECT
 router.post(
   "/",
   protect,

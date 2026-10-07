@@ -25,6 +25,8 @@ import AttendanceDashboard from "./pages/AttendanceDashboard";
 
 import ProjectList from "./pages/ProjectList";
 import AddProject from "./pages/AddProject";
+import ProjectDetails from "./pages/ProjectDetails";
+import EditProject from "./pages/EditProject";
 
 import Layout from "./components/layout/Layout";
 
@@ -268,6 +270,27 @@ function App() {
             <ProtectedRoute allowedRoles={["admin", "manager"]}>
               <Layout>
                 <AddProject />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+
+        <Route
+          path="/projects/:id"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "manager"]}>
+              <Layout>
+                <ProjectDetails />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/projects/:id/edit"
+          element={
+            <ProtectedRoute allowedRoles={["admin", "manager"]}>
+              <Layout>
+                <EditProject />
               </Layout>
             </ProtectedRoute>
           }
