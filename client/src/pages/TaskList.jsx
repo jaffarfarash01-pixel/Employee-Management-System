@@ -6,7 +6,16 @@ function TaskList() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
+  // Search and filter states
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+  const [priorityFilter, setPriorityFilter] = useState("all");
+
   const role = localStorage.getItem("role");
+
+  const loggedInUser = JSON.parse(
+    localStorage.getItem("user") || "{}"
+  );
 
   // Fetch tasks from backend
   const fetchTasks = async () => {
@@ -67,7 +76,6 @@ function TaskList() {
         throw new Error(data.message || "Failed to update status");
       }
 
-      // Update the task shown on the page
       setTasks((previousTasks) =>
         previousTasks.map((task) =>
           task._id === taskId
@@ -78,6 +86,30 @@ function TaskList() {
     } catch (err) {
       alert(err.message || "Failed to update task status");
     }
+  };
+
+  // Apply search and filters
+  const filteredTasks = tasks.filter((task) => {
+    const searchText = search.trim().toLowerCase();
+
+    const matchesSearch =
+      (task.title || "").toLowerCase().includes(searchText);
+
+    const matchesStatus =
+      statusFilter === "all" || task.status === statusFilter;
+
+    const matchesPriority =
+      priorityFilter === "all" ||
+      task.priority === priorityFilter;
+
+    return matchesSearch && matchesStatus && matchesPriority;
+  });
+
+  // Clear all filters
+  const clearFilters = () => {
+    setSearch("");
+    setStatusFilter("all");
+    setPriorityFilter("all");
   };
 
   if (loading) {
@@ -100,95 +132,185 @@ function TaskList() {
       {!error && tasks.length === 0 && (
         <div className="task-empty">
           <h3>No tasks found</h3>
-          <p>Tasks assigned to you or available for your role will appear here.</p>
+          <p>
+            Tasks assigned to you or available for your role
+            will appear here.
+          </p>
         </div>
       )}
 
       {tasks.length > 0 && (
-        <div className="task-table-wrapper">
-          <table className="task-table">
-            <thead>
-              <tr>
-                <th>Task</th>
-                <th>Project</th>
-                <th>Assigned To</th>
-                <th>Priority</th>
-                <th>Due Date</th>
-                <th>Status</th>
-              </tr>
-            </thead>
+        <>
+          {/* Search and filters */}
+          <div className="task-filters">
+            <div className="task-search">
+              <label htmlFor="taskSearch">Search tasks</label>
+              <input
+                id="taskSearch"
+                type="text"
+                placeholder="Search by task title..."
+                value={search}
+                onChange={(event) =>
+                  setSearch(event.target.value)
+                }
+              />
+            </div>
 
-            <tbody>
-              {tasks.map((task) => {
-                const assignedUsers = Array.isArray(task.assignedTo)
-                  ? task.assignedTo
-                  : [];
+            <div className="task-filter-field">
+              <label htmlFor="statusFilter">Status</label>
+              <select
+                id="statusFilter"
+                value={statusFilter}
+                onChange={(event) =>
+                  setStatusFilter(event.target.value)
+                }
+              >
+                <option value="all">All Statuses</option>
+                <option value="todo">To Do</option>
+                <option value="in-progress">In Progress</option>
+                <option value="completed">Completed</option>
+              </select>
+            </div>
 
-                const isAssignedEmployee = assignedUsers.some(
-                  (user) =>
-                    user._id ===
-                    JSON.parse(localStorage.getItem("user") || "{}").id
-                );
+            <div className="task-filter-field">
+              <label htmlFor="priorityFilter">Priority</label>
+              <select
+                id="priorityFilter"
+                value={priorityFilter}
+                onChange={(event) =>
+                  setPriorityFilter(event.target.value)
+                }
+              >
+                <option value="all">All Priorities</option>
+                <option value="low">Low</option>
+                <option value="medium">Medium</option>
+                <option value="high">High</option>
+              </select>
+            </div>
 
-                const canUpdateStatus =
-                  role === "admin" ||
-                  role === "manager" ||
-                  (role === "employee" && isAssignedEmployee);
+            <button
+              type="button"
+              className="task-clear-filters"
+              onClick={clearFilters}
+            >
+              Clear Filters
+            </button>
+          </div>
 
-                return (
-                  <tr key={task._id}>
-                    <td>
-                      <strong>{task.title}</strong>
-                      <p className="task-description">
-                        {task.description || "No description"}
-                      </p>
-                    </td>
+          <p className="task-results-count">
+            Showing {filteredTasks.length} of {tasks.length} tasks
+          </p>
 
-                    <td>{task.project?.name || "—"}</td>
-
-                    <td>
-                      {assignedUsers.length > 0
-                        ? assignedUsers
-                            .map((user) => user.name)
-                            .join(", ")
-                        : "—"}
-                    </td>
-
-                    <td>
-                      <span className={`task-priority ${task.priority}`}>
-                        {task.priority}
-                      </span>
-                    </td>
-
-                    <td>
-                      {task.dueDate
-                        ? new Date(task.dueDate).toLocaleDateString()
-                        : "—"}
-                    </td>
-
-                    <td>
-                      {canUpdateStatus ? (
-                        <select
-                          className={`task-status-select ${task.status}`}
-                          value={task.status}
-                          onChange={(event) =>
-                            updateStatus(task._id, event.target.value)
-                          }
-                        >
-                          <option value="todo">To Do</option>
-                          <option value="in-progress">In Progress</option>
-                          <option value="completed">Completed</option>
-                        </select>
-                      ) : (
-                        task.status
-                      )}
-                    </td>
+          {/* Task table */}
+          {filteredTasks.length > 0 ? (
+            <div className="task-table-wrapper">
+              <table className="task-table">
+                <thead>
+                  <tr>
+                    <th>Task</th>
+                    <th>Project</th>
+                    <th>Assigned To</th>
+                    <th>Priority</th>
+                    <th>Due Date</th>
+                    <th>Status</th>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
+                </thead>
+
+                <tbody>
+                  {filteredTasks.map((task) => {
+                    const assignedUsers = Array.isArray(
+                      task.assignedTo
+                    )
+                      ? task.assignedTo
+                      : [];
+
+                    const isAssignedEmployee = assignedUsers.some(
+                      (user) =>
+                        user._id === loggedInUser.id ||
+                        user._id === loggedInUser._id
+                    );
+
+                    const canUpdateStatus =
+                      role === "admin" ||
+                      role === "manager" ||
+                      (role === "employee" &&
+                        isAssignedEmployee);
+
+                    return (
+                      <tr key={task._id}>
+                        <td>
+                          <strong>{task.title}</strong>
+                          <p className="task-description">
+                            {task.description || "No description"}
+                          </p>
+                        </td>
+
+                        <td>{task.project?.name || "—"}</td>
+
+                        <td>
+                          {assignedUsers.length > 0
+                            ? assignedUsers
+                                .map((user) => user.name)
+                                .join(", ")
+                            : "—"}
+                        </td>
+
+                        <td>
+                          <span
+                            className={`task-priority ${task.priority}`}
+                          >
+                            {task.priority}
+                          </span>
+                        </td>
+
+                        <td>
+                          {task.dueDate
+                            ? new Date(
+                                task.dueDate
+                              ).toLocaleDateString()
+                            : "—"}
+                        </td>
+
+                        <td>
+                          {canUpdateStatus ? (
+                            <select
+                              className={`task-status-select ${task.status}`}
+                              value={task.status}
+                              onChange={(event) =>
+                                updateStatus(
+                                  task._id,
+                                  event.target.value
+                                )
+                              }
+                            >
+                              <option value="todo">To Do</option>
+                              <option value="in-progress">
+                                In Progress
+                              </option>
+                              <option value="completed">
+                                Completed
+                              </option>
+                            </select>
+                          ) : (
+                            task.status
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="task-empty">
+              <h3>No matching tasks</h3>
+              <p>Try changing your search or filters.</p>
+              <button onClick={clearFilters}>
+                Clear Filters
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

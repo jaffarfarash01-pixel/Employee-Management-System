@@ -4,6 +4,7 @@ const Project = require("../models/Project");
 const { protect, authorize } = require("../middleware/authMiddlware");
 const Department = require("../models/Department");
 const Employee = require("../models/Employee");
+const Notification = require("../models/Notification");
 
 const router = express.Router();
 
@@ -80,6 +81,16 @@ router.post("/", protect, authorize("admin", "manager"), async (req, res) => {
       dueDate,
       status,
     });
+    
+// Create notifications for assigned employees
+const notifications = assignedTo.map((userId) => ({
+  recipient: userId,
+  message: `You have been assigned a new task: ${title}`,
+  type: "task-assigned",
+  relatedTask: task._id,
+}));
+
+await Notification.insertMany(notifications);
 
     res.status(201).json({
       message: "Task created successfully",

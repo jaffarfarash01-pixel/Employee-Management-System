@@ -12,28 +12,37 @@ function EmployeeDashboard() {
   const [leaves, setLeaves] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState(false);
+  const [tasks, setTasks] = useState([]);
 
   const token = localStorage.getItem("token");
   const employeeName = localStorage.getItem("name") || "Employee";
 
   const fetchDashboardData = async () => {
     try {
-      const [attendanceResponse, leavesResponse] = await Promise.all([
-        fetch("http://localhost:5000/api/attendance/my", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }),
+      const [attendanceResponse, leavesResponse, tasksResponse] =
+        await Promise.all([
+          fetch("http://localhost:5000/api/attendance/my", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
 
-        fetch("http://localhost:5000/api/leaves/my", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }),
-      ]);
+          fetch("http://localhost:5000/api/leaves/my", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+
+          fetch("http://localhost:5000/api/tasks", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
+        ]);
 
       const attendanceData = await attendanceResponse.json();
       const leavesData = await leavesResponse.json();
+      const tasksData = await tasksResponse.json();
 
       if (attendanceResponse.ok) {
         setAttendance(attendanceData);
@@ -41,6 +50,10 @@ function EmployeeDashboard() {
 
       if (leavesResponse.ok) {
         setLeaves(leavesData);
+      }
+
+      if (tasksResponse.ok) {
+        setTasks(Array.isArray(tasksData) ? tasksData : []);
       }
     } catch (error) {
       console.error(error);
@@ -78,7 +91,7 @@ function EmployeeDashboard() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       const data = await response.json();
@@ -110,7 +123,7 @@ function EmployeeDashboard() {
           headers: {
             Authorization: `Bearer ${token}`,
           },
-        }
+        },
       );
 
       const data = await response.json();
@@ -130,13 +143,29 @@ function EmployeeDashboard() {
     }
   };
 
+// Task counts
+const totalTasks = tasks.length;
+
+const pendingTasks = tasks.filter(
+  (task) => task.status === "todo"
+).length;
+
+const inProgressTasks = tasks.filter(
+  (task) => task.status === "in-progress"
+).length;
+
+const completedTasks = tasks.filter(
+  (task) => task.status === "completed"
+).length;
+
+
   // Leave counts
   const pendingLeaves = leaves.filter(
-    (leave) => leave.approvalStatus === "pending"
+    (leave) => leave.approvalStatus === "pending",
   ).length;
 
   const approvedLeaves = leaves.filter(
-    (leave) => leave.approvalStatus === "approved"
+    (leave) => leave.approvalStatus === "approved",
   ).length;
 
   const recentLeaves = leaves.slice(0, 5);
@@ -147,14 +176,11 @@ function EmployeeDashboard() {
 
   return (
     <div className="admin-dashboard">
-
       {/* Header */}
       <div className="dashboard-header">
         <div>
           <h1>Welcome, {employeeName}</h1>
-          <p>
-            Here's your attendance and leave overview for today.
-          </p>
+          <p>Here's your attendance and leave overview for today.</p>
         </div>
 
         <div className="dashboard-date">
@@ -168,7 +194,6 @@ function EmployeeDashboard() {
 
       {/* Statistics */}
       <div className="stats-grid">
-
         <div className="stat-card">
           <div className="stat-icon">
             <Clock3 size={22} />
@@ -177,11 +202,7 @@ function EmployeeDashboard() {
           <div>
             <h3>Today Status</h3>
 
-            <p>
-              {todayRecord
-                ? todayRecord.status
-                : "Not Marked"}
-            </p>
+            <p>{todayRecord ? todayRecord.status : "Not Marked"}</p>
           </div>
         </div>
 
@@ -222,12 +243,62 @@ function EmployeeDashboard() {
             </p>
           </div>
         </div>
-
       </div>
+
+      {/* Task Statistics */}
+<div className="dashboard-section">
+  <div className="section-header">
+    <div>
+      <h2>My Tasks</h2>
+      <p>Overview of your assigned tasks</p>
+    </div>
+  </div>
+
+  <div className="stats-grid">
+    <div className="stat-card">
+      <div className="stat-icon">
+        <CheckCircle2 size={22} />
+      </div>
+      <div>
+        <h3>Total Tasks</h3>
+        <p>{totalTasks}</p>
+      </div>
+    </div>
+
+    <div className="stat-card">
+      <div className="stat-icon">
+        <Clock3 size={22} />
+      </div>
+      <div>
+        <h3>To Do</h3>
+        <p>{pendingTasks}</p>
+      </div>
+    </div>
+
+    <div className="stat-card">
+      <div className="stat-icon">
+        <Clock3 size={22} />
+      </div>
+      <div>
+        <h3>In Progress</h3>
+        <p>{inProgressTasks}</p>
+      </div>
+    </div>
+
+    <div className="stat-card">
+      <div className="stat-icon">
+        <CheckCircle2 size={22} />
+      </div>
+      <div>
+        <h3>Completed</h3>
+        <p>{completedTasks}</p>
+      </div>
+    </div>
+  </div>
+</div>
 
       {/* Today's Attendance */}
       <div className="dashboard-section">
-
         <div className="section-header">
           <div>
             <h2>Today's Attendance</h2>
@@ -236,17 +307,13 @@ function EmployeeDashboard() {
         </div>
 
         <div className="employee-attendance-card">
-
           <div className="employee-attendance-info">
-
             <div>
               <span>Check In</span>
 
               <strong>
                 {todayRecord?.checkIn
-                  ? new Date(
-                      todayRecord.checkIn
-                    ).toLocaleTimeString()
+                  ? new Date(todayRecord.checkIn).toLocaleTimeString()
                   : "--"}
               </strong>
             </div>
@@ -256,9 +323,7 @@ function EmployeeDashboard() {
 
               <strong>
                 {todayRecord?.checkOut
-                  ? new Date(
-                      todayRecord.checkOut
-                    ).toLocaleTimeString()
+                  ? new Date(todayRecord.checkOut).toLocaleTimeString()
                   : "--"}
               </strong>
             </div>
@@ -274,24 +339,17 @@ function EmployeeDashboard() {
                 {todayRecord?.status || "Not Marked"}
               </strong>
             </div>
-
           </div>
 
           <div className="employee-attendance-actions">
-
             <button
               className="attendance-action-btn check-in-btn"
               onClick={handleCheckIn}
-              disabled={
-                actionLoading ||
-                !!todayRecord?.checkIn
-              }
+              disabled={actionLoading || !!todayRecord?.checkIn}
             >
               <LogIn size={18} />
 
-              {todayRecord?.checkIn
-                ? "Checked In"
-                : "Check In"}
+              {todayRecord?.checkIn ? "Checked In" : "Check In"}
             </button>
 
             <button
@@ -305,19 +363,14 @@ function EmployeeDashboard() {
             >
               <LogOut size={18} />
 
-              {todayRecord?.checkOut
-                ? "Checked Out"
-                : "Check Out"}
+              {todayRecord?.checkOut ? "Checked Out" : "Check Out"}
             </button>
-
           </div>
-
         </div>
       </div>
 
       {/* Recent Leaves */}
       <div className="dashboard-section">
-
         <div className="section-header">
           <div>
             <h2>Recent Leave Requests</h2>
@@ -326,14 +379,10 @@ function EmployeeDashboard() {
         </div>
 
         {recentLeaves.length === 0 ? (
-          <p className="empty-message">
-            No leave requests found.
-          </p>
+          <p className="empty-message">No leave requests found.</p>
         ) : (
           <div className="attendance-table-wrapper">
-
             <table className="attendance-table">
-
               <thead>
                 <tr>
                   <th>Leave Type</th>
@@ -347,20 +396,11 @@ function EmployeeDashboard() {
               <tbody>
                 {recentLeaves.map((leave) => (
                   <tr key={leave._id}>
-
                     <td>{leave.leaveType}</td>
 
-                    <td>
-                      {new Date(
-                        leave.startDate
-                      ).toLocaleDateString()}
-                    </td>
+                    <td>{new Date(leave.startDate).toLocaleDateString()}</td>
 
-                    <td>
-                      {new Date(
-                        leave.endDate
-                      ).toLocaleDateString()}
-                    </td>
+                    <td>{new Date(leave.endDate).toLocaleDateString()}</td>
 
                     <td>
                       {leave.duration} day
@@ -374,21 +414,16 @@ function EmployeeDashboard() {
                         {leave.approvalStatus}
                       </span>
                     </td>
-
                   </tr>
                 ))}
               </tbody>
-
             </table>
-
           </div>
         )}
-
       </div>
 
       {/* Recent Attendance */}
       <div className="dashboard-section">
-
         <div className="section-header">
           <div>
             <h2>Recent Attendance</h2>
@@ -397,14 +432,10 @@ function EmployeeDashboard() {
         </div>
 
         {attendance.length === 0 ? (
-          <p className="empty-message">
-            No attendance records found.
-          </p>
+          <p className="empty-message">No attendance records found.</p>
         ) : (
           <div className="attendance-table-wrapper">
-
             <table className="attendance-table">
-
               <thead>
                 <tr>
                   <th>Date</th>
@@ -418,26 +449,17 @@ function EmployeeDashboard() {
               <tbody>
                 {attendance.slice(0, 5).map((record) => (
                   <tr key={record._id}>
-
-                    <td>
-                      {new Date(
-                        record.date
-                      ).toLocaleDateString()}
-                    </td>
+                    <td>{new Date(record.date).toLocaleDateString()}</td>
 
                     <td>
                       {record.checkIn
-                        ? new Date(
-                            record.checkIn
-                          ).toLocaleTimeString()
+                        ? new Date(record.checkIn).toLocaleTimeString()
                         : "--"}
                     </td>
 
                     <td>
                       {record.checkOut
-                        ? new Date(
-                            record.checkOut
-                          ).toLocaleTimeString()
+                        ? new Date(record.checkOut).toLocaleTimeString()
                         : "--"}
                     </td>
 
@@ -449,21 +471,14 @@ function EmployeeDashboard() {
                       </span>
                     </td>
 
-                    <td>
-                      {record.workingHours || 0} hrs
-                    </td>
-
+                    <td>{record.workingHours || 0} hrs</td>
                   </tr>
                 ))}
               </tbody>
-
             </table>
-
           </div>
         )}
-
       </div>
-
     </div>
   );
 }

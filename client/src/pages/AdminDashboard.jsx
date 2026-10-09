@@ -14,6 +14,7 @@ function AdminDashboard() {
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
   const [attendance, setAttendance] = useState([]);
+  const [tasks, setTasks] = useState([]);
 
   const today = new Date();
 
@@ -47,11 +48,18 @@ function AdminDashboard() {
               Authorization: `Bearer ${token}`,
             },
           }),
+
+          fetch("http://localhost:5000/api/tasks", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          }),
         ]);
 
       const employeeData = await employeeResponse.json();
       const departmentData = await departmentResponse.json();
       const attendanceData = await attendanceResponse.json();
+      const taskData = await taskResponse.json();
 
       if (!employeeResponse.ok) {
         console.error(employeeData.message);
@@ -69,6 +77,12 @@ function AdminDashboard() {
         console.error(attendanceData.message);
       } else {
         setAttendance(attendanceData);
+      }
+
+      if (!taskResponse.ok) {
+        console.error(taskData.message);
+      } else {
+        setTasks(Array.isArray(taskData) ? taskData : []);
       }
     } catch (error) {
       console.error("Dashboard error:", error);
@@ -129,6 +143,18 @@ function AdminDashboard() {
       color: "#3b82f6",
     },
   ];
+
+  const totalTasks = tasks.length;
+
+  const pendingTasks = tasks.filter((task) => task.status === "todo").length;
+
+  const inProgressTasks = tasks.filter(
+    (task) => task.status === "in-progress",
+  ).length;
+
+  const completedTasks = tasks.filter(
+    (task) => task.status === "completed",
+  ).length;
 
   const stats = [
     {
@@ -254,6 +280,57 @@ function AdminDashboard() {
           )}
         </div>
       </div>
+
+      {/* Task Statistics */}
+      <div className="dashboard-section">
+        <div className="section-header">
+          <div>
+            <h2>Task Statistics</h2>
+            <p>Overview of tasks across the organization</p>
+          </div>
+        </div>
+
+        <div className="stats-grid">
+          <div className="stat-card">
+            <div className="stat-card-top">
+              <div className="stat-icon">📋</div>
+            </div>
+            <div className="stat-value">{loading ? "..." : totalTasks}</div>
+            <div className="stat-title">Total Tasks</div>
+            <div className="stat-description">All tasks</div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-card-top">
+              <div className="stat-icon">⏳</div>
+            </div>
+            <div className="stat-value">{loading ? "..." : pendingTasks}</div>
+            <div className="stat-title">To Do</div>
+            <div className="stat-description">Tasks not started</div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-card-top">
+              <div className="stat-icon">🔄</div>
+            </div>
+            <div className="stat-value">
+              {loading ? "..." : inProgressTasks}
+            </div>
+            <div className="stat-title">In Progress</div>
+            <div className="stat-description">Tasks being worked on</div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-card-top">
+              <div className="stat-icon">✅</div>
+            </div>
+            <div className="stat-value">{loading ? "..." : completedTasks}</div>
+            <div className="stat-title">Completed</div>
+            <div className="stat-description">Finished tasks</div>
+          </div>
+        </div>
+      </div>
+
       {/* Today's Attendance */}
 
       <div className="dashboard-section">

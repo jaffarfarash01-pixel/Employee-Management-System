@@ -15,6 +15,7 @@ function ManagerDashboard() {
   const [employees, setEmployees] = useState([]);
   const [attendance, setAttendance] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [tasks, setTasks] = useState([]);
 
   const today = new Date();
 
@@ -41,10 +42,17 @@ function ManagerDashboard() {
             Authorization: `Bearer ${token}`,
           },
         }),
+
+        fetch("http://localhost:5000/api/tasks", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }),
       ]);
 
       const employeeData = await employeeResponse.json();
       const attendanceData = await attendanceResponse.json();
+      const taskData = await taskResponse.json();
 
       if (!employeeResponse.ok) {
         console.error(employeeData.message);
@@ -56,6 +64,12 @@ function ManagerDashboard() {
         console.error(attendanceData.message);
       } else {
         setAttendance(attendanceData);
+      }
+
+      if (!taskResponse.ok) {
+        console.error(taskData.message);
+      } else {
+        setTasks(Array.isArray(taskData) ? taskData : []);
       }
     } catch (error) {
       console.error("Manager dashboard error:", error);
@@ -92,6 +106,18 @@ function ManagerDashboard() {
 
   const onLeaveToday = todayAttendance.filter(
     (record) => record.status === "on-leave",
+  ).length;
+
+  const totalTasks = tasks.length;
+
+  const pendingTasks = tasks.filter((task) => task.status === "todo").length;
+
+  const inProgressTasks = tasks.filter(
+    (task) => task.status === "in-progress",
+  ).length;
+
+  const completedTasks = tasks.filter(
+    (task) => task.status === "completed",
   ).length;
 
   const attendanceChartData = [
@@ -182,6 +208,65 @@ function ManagerDashboard() {
         ))}
       </div>
 
+      {/* Task Statistics */}
+
+      <div className="dashboard-section">
+        <div className="section-header">
+          <div>
+            <h2>Task Statistics</h2>
+            <p>Overview of tasks for your team</p>
+          </div>
+        </div>
+
+        <div className="stats-grid">
+          <div className="stat-card">
+            <div className="stat-card-top">
+              <div className="stat-icon">
+                <Users size={20} />
+              </div>
+            </div>
+            <div className="stat-value">{loading ? "..." : totalTasks}</div>
+            <div className="stat-title">Total Tasks</div>
+            <div className="stat-description">Tasks available to you</div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-card-top">
+              <div className="stat-icon">
+                <Clock3 size={20} />
+              </div>
+            </div>
+            <div className="stat-value">{loading ? "..." : pendingTasks}</div>
+            <div className="stat-title">To Do</div>
+            <div className="stat-description">Tasks not started</div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-card-top">
+              <div className="stat-icon">
+                <CalendarDays size={20} />
+              </div>
+            </div>
+            <div className="stat-value">
+              {loading ? "..." : inProgressTasks}
+            </div>
+            <div className="stat-title">In Progress</div>
+            <div className="stat-description">Tasks being worked on</div>
+          </div>
+
+          <div className="stat-card">
+            <div className="stat-card-top">
+              <div className="stat-icon">
+                <UserCheck size={20} />
+              </div>
+            </div>
+            <div className="stat-value">{loading ? "..." : completedTasks}</div>
+            <div className="stat-title">Completed</div>
+            <div className="stat-description">Finished tasks</div>
+          </div>
+        </div>
+      </div>
+
       {/* Department Attendance */}
 
       <div className="dashboard-section">
@@ -228,7 +313,7 @@ function ManagerDashboard() {
         </div>
       </div>
 
-        {/* Today's Attendance */}
+      {/* Today's Attendance */}
 
       <div className="dashboard-section">
         <div className="section-header">
@@ -296,47 +381,47 @@ function ManagerDashboard() {
         </div>
       </div>
 
-       {/* Recent Activity */}
-            <div className="dashboard-section">
-              <div className="section-header">
-                <div>
-                  <h2>Recent Activity</h2>
-                  <p>Latest employee attendance activity</p>
+      {/* Recent Activity */}
+      <div className="dashboard-section">
+        <div className="section-header">
+          <div>
+            <h2>Recent Activity</h2>
+            <p>Latest employee attendance activity</p>
+          </div>
+        </div>
+
+        {attendance.length === 0 ? (
+          <p className="empty-message">No recent activity found.</p>
+        ) : (
+          <div className="activity-list">
+            {attendance.slice(0, 5).map((record) => (
+              <div className="activity-item" key={record._id}>
+                <div className="activity-icon">
+                  <Clock3 size={18} />
                 </div>
+
+                <div className="activity-content">
+                  <div className="activity-title">
+                    {record.employee?.name || "Unknown Employee"}
+                  </div>
+
+                  <div className="activity-description">
+                    {record.checkIn
+                      ? `Checked in at ${new Date(
+                          record.checkIn,
+                        ).toLocaleTimeString()}`
+                      : `Attendance marked as ${record.status}`}
+                  </div>
+                </div>
+
+                <span className={`attendance-status status-${record.status}`}>
+                  {record.status}
+                </span>
               </div>
-      
-              {attendance.length === 0 ? (
-                <p className="empty-message">No recent activity found.</p>
-              ) : (
-                <div className="activity-list">
-                  {attendance.slice(0, 5).map((record) => (
-                    <div className="activity-item" key={record._id}>
-                      <div className="activity-icon">
-                        <Clock3 size={18} />
-                      </div>
-      
-                      <div className="activity-content">
-                        <div className="activity-title">
-                          {record.employee?.name || "Unknown Employee"}
-                        </div>
-      
-                        <div className="activity-description">
-                          {record.checkIn
-                            ? `Checked in at ${new Date(
-                                record.checkIn,
-                              ).toLocaleTimeString()}`
-                            : `Attendance marked as ${record.status}`}
-                        </div>
-                      </div>
-      
-                      <span className={`attendance-status status-${record.status}`}>
-                        {record.status}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
+            ))}
+          </div>
+        )}
+      </div>
     </div>
   );
 }
