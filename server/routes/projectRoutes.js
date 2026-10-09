@@ -1,6 +1,7 @@
 const express = require("express");
 const Project = require("../models/Project");
 const Department = require("../models/Department");
+const Task = require("../models/Task");
 
 const { protect, authorize } = require("../middleware/authMiddlware");
 const projectOwner = require("../middleware/projectOwner");
@@ -74,7 +75,41 @@ router.get(
           message: "Project not found",
         });
       }
-      res.json(project);
+       // Get all tasks belonging to this project
+      const tasks = await Task.find({
+        project: project._id,
+      })
+        .populate("assignedTo", "name email role")
+        .populate("assignedBy", "name email role")
+        .sort({ createdAt: -1 });
+
+        // calculate task statistics
+        const totalTasks = tasks.length;
+
+        const completedTasks = tasks.filter(
+          (task) => task.status === "completed"
+        ).length;
+
+        const inProgressTasks = tasks.filter(
+          (task) => task.status === "in-progress"
+        ).length;
+
+        const todoTasks = tasks.filter(
+          (task) => task.status === "todo"
+        ).length;
+
+        const progress = totalTasks === 0 ? 0 : Math.round((completedTasks / totalTasks) * 100);
+
+        // send project details and tasks
+      res.json({...project.toObject() , tasks ,
+     taskStats: {
+      total: totalTasks,
+          completed: completedTasks,
+          inProgress: inProgressTasks,
+          todo: todoTasks,
+          progress,
+    },
+  });
     } catch (error) {
       res.status(500).json({
         message: "server error",
@@ -89,12 +124,12 @@ router.get("/", protect, authorize("admin", "manager"), async (req, res) => {
   try {
     let projects;
 
-  // ADMIN → see all projects
-if (req.user.role === "admin") {
-  projects = await Project.find()
-    .populate("department", "name description manager")
-    .populate("manager", "name email role");
-}
+    // ADMIN → see all projects
+    if (req.user.role === "admin") {
+      projects = await Project.find()
+        .populate("department", "name description manager")
+        .populate("manager", "name email role");
+    }
 
     // MANAGER → see only their department projects
     else if (req.user.role === "manager") {
@@ -110,12 +145,50 @@ if (req.user.role === "admin") {
         .populate("department", "name description manager")
         .populate("manager", "name email role");
     }
+    // Add task statistics to every project
+    const projectsWithProgress = await Promise.all(
+      projects.map(async (project) => {
+        const totalTasks = await Task.countDocuments({
+          project: project._id,
+        });
 
-    res.json(projects);
+        const completedTasks = await Task.countDocuments({
+          project: project._id,
+          status: "completed",
+        });
+
+        const inProgressTasks = await Task.countDocuments({
+          project: project._id,
+          status: "in-progress",
+        });
+
+        const todoTasks = await Task.countDocuments({
+          project: project._id,
+          status: "todo",
+        });
+        const progress =
+          totalTasks === 0
+            ? 0
+            : Math.round((completedTasks / totalTasks) * 100);
+
+        return {
+          ...project.toObject(),
+          taskStats: {
+            total: totalTasks,
+            completed: completedTasks,
+            inProgress: inProgressTasks,
+            todo: todoTasks,
+            progress,
+          },
+        };
+      }),
+    );
+
+    res.status(200).json(projectsWithProgress);
   } catch (error) {
-  console.error("GET PROJECTS ERROR:", error);
-  res.status(500).json({ message: error.message });
-}
+    console.error("GET PROJECTS ERROR:", error);
+    res.status(500).json({ message: error.message });
+  }
 });
 // UPDATE
 router.put(

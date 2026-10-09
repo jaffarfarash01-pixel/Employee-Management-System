@@ -200,6 +200,14 @@ router.put(
     try {
       const { status } = req.body;
 
+const allowedStatuses = ["todo", "in-progress", "completed"];
+
+if (!allowedStatuses.includes(status)) {
+  return res.status(400).json({
+    message: "Invalid status. Use todo, in-progress, or completed.",
+  });
+}
+
       const task = await Task.findById(req.params.id);
 
       if (!task) {

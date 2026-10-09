@@ -13,32 +13,32 @@ function ProjectList() {
 
   // Search Project
   const filteredProjects = projects.filter((project) => {
-  const matchesSearch =
-    project.name.toLowerCase().includes(search.toLowerCase()) ||
-    (project.department?.name || "")
-      .toLowerCase()
-      .includes(search.toLowerCase());
+    const matchesSearch =
+      project.name.toLowerCase().includes(search.toLowerCase()) ||
+      (project.department?.name || "")
+        .toLowerCase()
+        .includes(search.toLowerCase());
 
-  const matchesStatus =
-    statusFilter === "all" || project.status === statusFilter;
+    const matchesStatus =
+      statusFilter === "all" || project.status === statusFilter;
 
-  return matchesSearch && matchesStatus;
-});
+    return matchesSearch && matchesStatus;
+  });
 
-// project summary calculations
-const totalProjects = projects.length;
+  // project summary calculations
+  const totalProjects = projects.length;
 
-const activeProjects = projects.filter( 
-  (project) => project.status === "active"
-).length;
+  const activeProjects = projects.filter(
+    (project) => project.status === "active",
+  ).length;
 
-const completedProjects = projects.filter(
-  (project) => project.status === "completed" 
-).length;
+  const completedProjects = projects.filter(
+    (project) => project.status === "completed",
+  ).length;
 
-const planningProjects = projects.filter(
-  (project) => project.status === "planning"
-).length;
+  const planningProjects = projects.filter(
+    (project) => project.status === "planning",
+  ).length;
 
   const fetchProjects = async () => {
     const token = localStorage.getItem("token");
@@ -135,47 +135,47 @@ const planningProjects = projects.filter(
 
       {/* summary cards */}
       <div className="project-summary-grid">
-  <div className="project-summary-card">
-    <h3>Total Projects</h3>
-    <p>{totalProjects}</p>
-  </div>
+        <div className="project-summary-card">
+          <h3>Total Projects</h3>
+          <p>{totalProjects}</p>
+        </div>
 
-  <div className="project-summary-card">
-    <h3>Active Projects</h3>
-    <p>{activeProjects}</p>
-  </div>
+        <div className="project-summary-card">
+          <h3>Active Projects</h3>
+          <p>{activeProjects}</p>
+        </div>
 
-  <div className="project-summary-card">
-    <h3>Completed Projects</h3>
-    <p>{completedProjects}</p>
-  </div>
+        <div className="project-summary-card">
+          <h3>Completed Projects</h3>
+          <p>{completedProjects}</p>
+        </div>
 
-  <div className="project-summary-card">
-    <h3>Planning Projects</h3>
-    <p>{planningProjects}</p>
-  </div>
-</div>
+        <div className="project-summary-card">
+          <h3>Planning Projects</h3>
+          <p>{planningProjects}</p>
+        </div>
+      </div>
 
-{/* Search project */}
+      {/* Search project */}
       <div className="project-filters">
-  <input
-    type="text"
-    placeholder="Search by project or department..."
-    value={search}
-    onChange={(e) => setSearch(e.target.value)}
-  />
+        <input
+          type="text"
+          placeholder="Search by project or department..."
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
+        />
 
-  <select
-    value={statusFilter}
-    onChange={(e) => setStatusFilter(e.target.value)}
-  >
-    <option value="all">All Statuses</option>
-    <option value="planning">Planning</option>
-    <option value="active">Active</option>
-    <option value="completed">Completed</option>
-    <option value="cancelled">Cancelled</option>
-  </select>
-</div>
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="all">All Statuses</option>
+          <option value="planning">Planning</option>
+          <option value="active">Active</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
 
       {/* Projects */}
       {filteredProjects.length === 0 ? (
@@ -220,24 +220,57 @@ const planningProjects = projects.filter(
                 </p>
               </div>
 
+              {/* Project Progress */}
+              <div className="project-progress">
+                {project.taskStats?.total > 0 ? (
+                  <>
+                    <div className="project-progress-header">
+                      <span>Task Progress</span>
+                      <span>{project.taskStats.progress}%</span>
+                    </div>
+
+                    <div className="progress-track">
+                      <div
+                        className="progress-fill"
+                        style={{
+                          width: `${project.taskStats.progress}%`,
+                        }}
+                      />
+                    </div>
+
+                    <div className="project-task-counts">
+                      <span>Total: {project.taskStats.total}</span>
+                      <span>Completed: {project.taskStats.completed}</span>
+                      <span>In Progress: {project.taskStats.inProgress}</span>
+                      <span>To Do: {project.taskStats.todo}</span>
+                    </div>
+                  </>
+                ) : (
+                  <p className="no-tasks-message">No tasks yet</p>
+                )}
+              </div>
+
               <div className="project-card-actions">
                 <button onClick={() => navigate(`/projects/${project._id}`)}>
                   View
                 </button>
 
                 {(role === "admin" || role === "manager") && (
-                  <button
-                    onClick={() => navigate(`/projects/${project._id}/edit`)}
-                  >
-                    Edit
-                  </button>
+                  <>
+                    <button
+                      onClick={() => navigate(`/projects/${project._id}/edit`)}
+                    >
+                      Edit
+                    </button>
+
+                    <button
+                      onClick={() => handleDelete(project._id)}
+                      className="delete-btn"
+                    >
+                      Delete
+                    </button>
+                  </>
                 )}
-                <button
-                  onClick={() => handleDelete(project._id)}
-                  className="delete-btn"
-                >
-                  Delete
-                </button>
               </div>
             </div>
           ))}

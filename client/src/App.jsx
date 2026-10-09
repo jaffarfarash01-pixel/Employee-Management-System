@@ -28,6 +28,9 @@ import AddProject from "./pages/AddProject";
 import ProjectDetails from "./pages/ProjectDetails";
 import EditProject from "./pages/EditProject";
 
+// Task
+import TaskList from "./pages/TaskList";
+
 import Layout from "./components/layout/Layout";
 
 function App() {
@@ -294,6 +297,17 @@ function App() {
               </Layout>
             </ProtectedRoute>
           }
+        />
+
+        {/* Task routes */}
+        <Route path="/tasks"
+        element={
+          <ProtectedRoute allowedRoles={["admin","manager","employee"]}>
+            <Layout>
+              <TaskList />
+            </Layout>
+          </ProtectedRoute>
+        }
         />
       </Routes>
     </BrowserRouter>
