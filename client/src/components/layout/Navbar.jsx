@@ -1,8 +1,10 @@
 import { Menu, Search, Bell, ChevronDown, User, X } from "lucide-react";
 import { useState } from "react";
 import { useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 
 function Navbar({ onMenuClick }) {
+  const navigate = useNavigate();
   const [profileOpen, setProfileOpen] = useState(false);
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
@@ -59,7 +61,7 @@ useEffect(() => {
     localStorage.removeItem("role");
     localStorage.removeItem("name");
 
-    window.location.href = "/login";
+    window.location.href = "/";
   };
 
   return (
@@ -194,13 +196,16 @@ useEffect(() => {
 
               <div className="dropdown-divider" />
 
-              <button
+             {role === "employee" && (
+               <button
                 onClick={() => {
-                  window.location.href = "/profile";
+                  setProfileOpen(false);
+                  navigate("/my-profile")
                 }}
               >
                 My Profile
               </button>
+             )}
 
               <button
                 onClick={() => {
