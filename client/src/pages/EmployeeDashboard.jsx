@@ -27,7 +27,7 @@ function EmployeeDashboard() {
             },
           }),
 
-          fetch("http://localhost:5000/api/leaves/my", {
+          fetch("http://localhost:5000/api/leaves/my-leaves", {
             headers: {
               Authorization: `Bearer ${token}`,
             },
@@ -39,6 +39,12 @@ function EmployeeDashboard() {
             },
           }),
         ]);
+
+        // Check which API returns a non-JSON response
+      console.log("Attendance:", attendanceResponse.status, attendanceResponse.url);
+      console.log("Leaves:", leavesResponse.status, leavesResponse.url);
+      console.log("Tasks:", tasksResponse.status, tasksResponse.url);
+
 
       const attendanceData = await attendanceResponse.json();
       const leavesData = await leavesResponse.json();

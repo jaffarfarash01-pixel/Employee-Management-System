@@ -5,6 +5,9 @@ function EditEmployee() {
   const { id } = useParams();
   const navigate = useNavigate();
 
+  const user = JSON.parse(localStorage.getItem("user") || "null");
+const isAdmin = user?.role === "admin";
+
   const [departments, setDepartments] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -136,6 +139,7 @@ function EditEmployee() {
             name="employeeId"
             value={formData.employeeId}
             onChange={handleChange}
+            readOnly={!isAdmin}
             required
           />
         </div>
@@ -162,6 +166,7 @@ function EditEmployee() {
             value={formData.department}
             onChange={handleChange}
             required
+            disabled={!isAdmin}
           >
             <option value="">Select Department</option>
 

@@ -14,6 +14,8 @@ const employeeSchema = new mongoose.Schema({
      phone:{
         type:String,
         required:true,
+        trim: true,
+        match: [/^[6-9]\d{9}$/, "Enter a valid 10-digit Indian mobile number"],
     },
      department:{
         type:mongoose.Schema.Types.ObjectId,

@@ -29,7 +29,7 @@ function AdminDashboard() {
     const token = localStorage.getItem("token");
 
     try {
-      const [employeeResponse, departmentResponse, attendanceResponse] =
+      const [employeeResponse, departmentResponse, attendanceResponse , tasksResponse] =
         await Promise.all([
           fetch("http://localhost:5000/api/employees", {
             headers: {
@@ -59,7 +59,7 @@ function AdminDashboard() {
       const employeeData = await employeeResponse.json();
       const departmentData = await departmentResponse.json();
       const attendanceData = await attendanceResponse.json();
-      const taskData = await taskResponse.json();
+      const taskData = await tasksResponse.json();
 
       if (!employeeResponse.ok) {
         console.error(employeeData.message);
@@ -79,7 +79,7 @@ function AdminDashboard() {
         setAttendance(attendanceData);
       }
 
-      if (!taskResponse.ok) {
+      if (!tasksResponse.ok) {
         console.error(taskData.message);
       } else {
         setTasks(Array.isArray(taskData) ? taskData : []);

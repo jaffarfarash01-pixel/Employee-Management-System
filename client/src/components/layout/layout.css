@@ -2297,3 +2297,76 @@
     width: 100%;
   }
 }
+.navbar-right {
+  position: relative;
+}
+
+.notification-button {
+  position: relative;
+  cursor: pointer;
+}
+
+.notification-dot {
+  position: absolute;
+  top: -5px;
+  right: -5px;
+  min-width: 17px;
+  height: 17px;
+  padding: 0 3px;
+  border-radius: 50%;
+  background: #ef4444;
+  color: white;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.notification-dropdown {
+  position: absolute;
+  top: calc(100% + 12px);
+  right: 65px;
+  width: 320px;
+  max-height: 400px;
+  overflow-y: auto;
+  background: white;
+  color: #111827;
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  padding: 12px;
+}
+
+.notification-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 10px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.notification-item {
+  padding: 12px 8px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.notification-item.unread {
+  background: #eff6ff;
+}
+
+.notification-item p {
+  margin: 0 0 6px;
+  font-size: 14px;
+}
+
+.notification-item small {
+  color: #6b7280;
+  font-size: 11px;
+}
+
+.notification-item button {
+  display: block;
+  margin-top: 8px;
+  cursor: pointer;
+}

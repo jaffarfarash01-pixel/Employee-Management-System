@@ -25,6 +25,17 @@ router.post("/", protect, authorize("admin", "manager"), async (req, res) => {
       employee,
     });
   } catch (error) {
+    if (error.code === 11000) {
+      return res.status(409).json({
+        message: "Employee ID already exists",
+      });
+    }
+
+    if (error.name === "ValidationError") {
+      return res.status(400).json({
+        message: error.message,
+      });
+    }
     return res.status(500).json({
       message: "server error",
       error: error.message,
@@ -55,6 +66,46 @@ router.get("/me", protect, authorize("employee"), async (req, res) => {
     });
   }
 });
+// update my profile
+router.put("/me", protect, authorize("employee"), async (req, res) => {
+  try {
+    const { phone } = req.body;
+
+    if (!phone || !/^[6-9]\d{9}$/.test(phone.trim())) {
+      return res.status(400).json({
+        message: "Enter a valid 10-digit Indian mobile number",
+      });
+    }
+
+    const employee = await Employee.findOneAndUpdate(
+      { userId: req.user.userId },
+      { $set: { phone: phone.trim() } },
+      {
+        new: true,
+        runValidators: true,
+      }
+    )
+      .populate("userId", "name email role")
+      .populate("department", "name description manager");
+
+    if (!employee) {
+      return res.status(404).json({
+        message: "Employee profile not found",
+      });
+    }
+
+    res.json({
+      message: "Profile updated successfully",
+      employee,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+});
+
 
 // GET ALL EMPLOYEES
 router.get("/", protect, authorize("admin", "manager"), async (req, res) => {
@@ -149,6 +200,7 @@ router.get(
     }
   },
 );
+
 // Update employee
 router.put("/:id", protect, authorize("admin", "manager"), async (req, res) => {
   try {
@@ -171,14 +223,36 @@ router.put("/:id", protect, authorize("admin", "manager"), async (req, res) => {
       }
     }
 
+    // Only allow specific fields to be updated
+    const allowedUpdates = {
+      phone: req.body.phone,
+      position: req.body.position,
+      joiningDate: req.body.joiningDate,
+      status: req.body.status,
+    };
+
+    // Only admins can change department or employee ID
+    if (req.user.role === "admin") {
+      if (req.body.department !== undefined) {
+        allowedUpdates.department = req.body.department;
+      }
+
+      if (req.body.employeeId !== undefined) {
+        allowedUpdates.employeeId = req.body.employeeId;
+      }
+    }
+
+    // Update only the permitted fields
     const updatedEmployee = await Employee.findByIdAndUpdate(
       req.params.id,
-      req.body,
+      { $set: allowedUpdates },
       {
         new: true,
         runValidators: true,
       },
-    );
+    )
+      .populate("userId", "name email role")
+      .populate("department", "name description manager");
 
     res.json({
       message: "Employee updated successfully",
@@ -188,35 +262,6 @@ router.put("/:id", protect, authorize("admin", "manager"), async (req, res) => {
     res.status(500).json({
       message: "Server error",
       error: error.message,
-    });
-  }
-});
-
-// Delete employee
-router.delete("/:id", protect, authorize("admin"), async (req, res) => {
-  try {
-    const employee = await Employee.findById(req.params.id);
-
-    if (!employee) {
-      return res.status(404).json({
-        message: "Employee not found",
-      });
-    }
-
-    // Delete employee profile
-    await Employee.findByIdAndDelete(req.params.id);
-
-    // Delete associated user account
-    await User.findByIdAndDelete(employee.userId);
-
-    res.json({
-      message: "Employee deleted successfully",
-    });
-  } catch (error) {
-    console.error(error);
-
-    res.status(500).json({
-      message: "Server error",
     });
   }
 });

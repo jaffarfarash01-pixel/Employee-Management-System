@@ -17,6 +17,7 @@ import EmployeeDetails from "./pages/EmployeeDetails";
 import EditEmployee from "./pages/EditEmployee";
 import Departments from "./pages/Departments";
 import DepartmentDetails from "./pages/DepartmentDetails";
+import MyProfile from "./pages/MyProfile";
 
 import CreateAnnouncement from "./pages/CreateAnnouncement";
 
@@ -308,6 +309,11 @@ function App() {
             </Layout>
           </ProtectedRoute>
         }
+        />
+
+        {/* my profile */}
+        <Route path="/my-profile" 
+        element={<MyProfile />}
         />
       </Routes>
     </BrowserRouter>
