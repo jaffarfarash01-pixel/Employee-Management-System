@@ -10,6 +10,50 @@ function Navbar({ onMenuClick }) {
   const [notifications, setNotifications] = useState([]);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
 
+  const [employeeSearch, setEmployeeSearch] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+
+  // search employee
+  const searchEmployees = async (query) => {
+    setEmployeeSearch(query);
+
+    if (!query.trim()) {
+      setSearchResults([]);
+      return;
+    }
+
+    const token = localStorage.getItem("token");
+
+    try {
+      const response = await fetch("http://localhost:5000/api/employees", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to search employees");
+      }
+
+      const data = await response.json();
+      const searchText = query.toLowerCase();
+
+      const matches = data.filter((employee) =>
+        [
+          employee.employeeId,
+          employee.userId?.name,
+          employee.userId?.email,
+          employee.position,
+        ].some((value) => value?.toLowerCase().includes(searchText)),
+      );
+
+      setSearchResults(matches.slice(0, 5));
+    } catch (error) {
+      console.error("Employee search error:", error);
+      setSearchResults([]);
+    }
+  };
+
   const token = localStorage.getItem("token");
 
   const unreadCount = notifications.filter(
@@ -17,44 +61,43 @@ function Navbar({ onMenuClick }) {
   ).length;
 
   const fetchNotifications = async () => {
-  if (!token) return;
+    if (!token) return;
 
-  setNotificationsLoading(true);
+    setNotificationsLoading(true);
 
-  try {
-    const response = await fetch(
-      "http://localhost:5000/api/notifications",
-      {
+    try {
+      const response = await fetch("http://localhost:5000/api/notifications", {
         headers: {
           Authorization: `Bearer ${token}`,
         },
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to fetch notifications");
       }
-    );
 
-    if (!response.ok) {
-      throw new Error("Failed to fetch notifications");
+      const data = await response.json();
+      setNotifications(Array.isArray(data) ? data : []);
+    } catch (error) {
+      console.error("Notification error:", error);
+    } finally {
+      setNotificationsLoading(false);
     }
+  };
 
-    const data = await response.json();
-    setNotifications(Array.isArray(data) ? data : []);
-  } catch (error) {
-    console.error("Notification error:", error);
-  } finally {
-    setNotificationsLoading(false);
-  }
-};
+  useEffect(() => {
+    fetchNotifications();
 
-useEffect(() => {
-  fetchNotifications();
+    const interval = setInterval(fetchNotifications, 30000);
 
-  const interval = setInterval(fetchNotifications, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
-  return () => clearInterval(interval);
-}, []);
+  const savedUser = JSON.parse(localStorage.getItem("user") || "null");
 
-  const role = localStorage.getItem("role") || "employee";
+  const role = localStorage.getItem("role") || savedUser?.role || "";
 
-  const username = localStorage.getItem("name") || "User";
+  const username = localStorage.getItem("name") || savedUser?.name || "User";
 
   const handleLogout = () => {
     localStorage.removeItem("token");
@@ -75,7 +118,51 @@ useEffect(() => {
         <div className="search-box">
           <Search size={18} />
 
-          <input type="text" placeholder="Search employees..." />
+          <input
+            type="text"
+            placeholder="Search employees..."
+            value={employeeSearch}
+            onChange={(e) => searchEmployees(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                const query = employeeSearch.trim();
+
+                setSearchResults([]);
+
+                navigate(
+                  query
+                    ? `/employees?search=${encodeURIComponent(query)}`
+                    : "/employees",
+                );
+              }
+
+              if (e.key === "Escape") {
+                setSearchResults([]);
+              }
+            }}
+          />
+
+          {employeeSearch.trim() && searchResults.length > 0 && (
+            <div className="employee-search-results">
+              {searchResults.map((employee) => (
+                <button
+                  key={employee._id}
+                  type="button"
+                  className="employee-search-result"
+                  onClick={() => {
+                    setEmployeeSearch("");
+                    setSearchResults([]);
+                    navigate(`/employees/${employee._id}`);
+                  }}
+                >
+                  <strong>{employee.userId?.name || "Unnamed employee"}</strong>
+                  <span>
+                    {employee.employeeId} · {employee.position}
+                  </span>
+                </button>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -83,85 +170,87 @@ useEffect(() => {
       <div className="navbar-right">
         {/* Notifications */}
         <button
-  className="notification-button"
-  onClick={() => {
-    setNotificationsOpen(!notificationsOpen);
-    fetchNotifications();
-  }}
-  aria-label="Notifications"
->
-  <Bell size={21} />
-
-  {unreadCount > 0 && (
-    <span className="notification-dot">
-      {unreadCount > 9 ? "9+" : unreadCount}
-    </span>
-  )}
-</button>
-
-{notificationsOpen && (
-  <div className="notification-dropdown">
-    <div className="notification-header">
-      <strong>Notifications</strong>
-
-      <button
-        onClick={() => setNotificationsOpen(false)}
-        aria-label="Close notifications"
-      >
-        <X size={18} />
-      </button>
-    </div>
-
-    {notificationsLoading && notifications.length === 0 ? (
-      <p>Loading notifications...</p>
-    ) : notifications.length === 0 ? (
-      <p>No notifications yet.</p>
-    ) : (
-      notifications.map((notification) => (
-        <div
-          key={notification._id}
-          className={`notification-item ${
-            notification.isRead ? "" : "unread"
-          }`}
+          className="notification-button"
+          onClick={() => {
+            setNotificationsOpen(!notificationsOpen);
+            fetchNotifications();
+          }}
+          aria-label="Notifications"
         >
-          <p>{notification.message}</p>
+          <Bell size={21} />
 
-          <small>
-            {new Date(notification.createdAt).toLocaleString()}
-          </small>
-
-          {!notification.isRead && (
-            <button
-              onClick={async () => {
-                try {
-                  const response = await fetch(
-                    `http://localhost:5000/api/notifications/${notification._id}/read`,
-                    {
-                      method: "PUT",
-                      headers: {
-                        Authorization: `Bearer ${token}`,
-                      },
-                    }
-                  );
-
-                  if (!response.ok) {
-                    throw new Error("Failed to mark notification as read");
-                  }
-
-                  await fetchNotifications();
-                } catch (error) {
-                  console.error(error);
-                }
-              }}
-            >
-              Mark as read
-            </button>
+          {unreadCount > 0 && (
+            <span className="notification-dot">
+              {unreadCount > 9 ? "9+" : unreadCount}
+            </span>
           )}
-        </div>
-      ))
-    )}
-  </div>
-)}
+        </button>
+
+        {notificationsOpen && (
+          <div className="notification-dropdown">
+            <div className="notification-header">
+              <strong>Notifications</strong>
+
+              <button
+                onClick={() => setNotificationsOpen(false)}
+                aria-label="Close notifications"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {notificationsLoading && notifications.length === 0 ? (
+              <p>Loading notifications...</p>
+            ) : notifications.length === 0 ? (
+              <p>No notifications yet.</p>
+            ) : (
+              notifications.map((notification) => (
+                <div
+                  key={notification._id}
+                  className={`notification-item ${
+                    notification.isRead ? "" : "unread"
+                  }`}
+                >
+                  <p>{notification.message}</p>
+
+                  <small>
+                    {new Date(notification.createdAt).toLocaleString()}
+                  </small>
+
+                  {!notification.isRead && (
+                    <button
+                      onClick={async () => {
+                        try {
+                          const response = await fetch(
+                            `http://localhost:5000/api/notifications/${notification._id}/read`,
+                            {
+                              method: "PUT",
+                              headers: {
+                                Authorization: `Bearer ${token}`,
+                              },
+                            },
+                          );
+
+                          if (!response.ok) {
+                            throw new Error(
+                              "Failed to mark notification as read",
+                            );
+                          }
+
+                          await fetchNotifications();
+                        } catch (error) {
+                          console.error(error);
+                        }
+                      }}
+                    >
+                      Mark as read
+                    </button>
+                  )}
+                </div>
+              ))
+            )}
+          </div>
+        )}
 
         {/* Profile */}
         <div className="profile-container">
@@ -196,16 +285,16 @@ useEffect(() => {
 
               <div className="dropdown-divider" />
 
-             {role === "employee" && (
-               <button
-                onClick={() => {
-                  setProfileOpen(false);
-                  navigate("/my-profile")
-                }}
-              >
-                My Profile
-              </button>
-             )}
+              {role === "employee" && (
+                <button
+                  onClick={() => {
+                    setProfileOpen(false);
+                    navigate("/my-profile");
+                  }}
+                >
+                  My Profile
+                </button>
+              )}
 
               <button
                 onClick={() => {
