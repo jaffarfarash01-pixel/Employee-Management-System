@@ -329,6 +329,13 @@
   cursor: pointer;
 }
 
+.employee-search-empty {
+  padding: 12px 14px;
+  margin: 0;
+  font-size: 14px;
+  opacity: 0.75;
+}
+
 .employee-search-result:last-child {
   border-bottom: none;
 }

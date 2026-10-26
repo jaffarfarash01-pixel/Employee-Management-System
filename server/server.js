@@ -13,6 +13,7 @@ const leaveRoutes = require("./routes/leaveRoutes");
 const announcementRoutes = require("./routes/announcementRoutes");
 const attendanceRoutes = require("./routes/attendanceRoutes");
 const notificationRoutes = require("./routes/notificationRoutes");
+const companyDataRoutes = require("./routes/companyDataRoutes");
 
 require("./jobs/attendanceJob");
 
@@ -34,6 +35,7 @@ app.use("/api/leaves", leaveRoutes);
 app.use("/api/announcements", announcementRoutes);
 app.use("/api/attendance", attendanceRoutes);
 app.use("/api/notifications", notificationRoutes);
+app.use("/api/company-data", companyDataRoutes);
 
 
 app.get("/",(req,res) => {

@@ -2,6 +2,7 @@ import { Menu, Search, Bell, ChevronDown, User, X } from "lucide-react";
 import { useState } from "react";
 import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useRef } from "react";
 
 function Navbar({ onMenuClick }) {
   const navigate = useNavigate();
@@ -9,6 +10,8 @@ function Navbar({ onMenuClick }) {
   const [notificationsOpen, setNotificationsOpen] = useState(false);
   const [notifications, setNotifications] = useState([]);
   const [notificationsLoading, setNotificationsLoading] = useState(false);
+
+  const searchBoxRef = useRef(null);
 
   const [employeeSearch, setEmployeeSearch] = useState("");
   const [searchResults, setSearchResults] = useState([]);
@@ -85,13 +88,22 @@ function Navbar({ onMenuClick }) {
     }
   };
 
-  useEffect(() => {
-    fetchNotifications();
+ useEffect(() => {
+  const handleOutsideClick = (event) => {
+    if (
+      searchBoxRef.current &&
+      !searchBoxRef.current.contains(event.target)
+    ) {
+      setSearchResults([]);
+    }
+  };
 
-    const interval = setInterval(fetchNotifications, 30000);
+  document.addEventListener("mousedown", handleOutsideClick);
 
-    return () => clearInterval(interval);
-  }, []);
+  return () => {
+    document.removeEventListener("mousedown", handleOutsideClick);
+  };
+}, []);
 
   const savedUser = JSON.parse(localStorage.getItem("user") || "null");
 
@@ -115,7 +127,7 @@ function Navbar({ onMenuClick }) {
           <Menu size={23} />
         </button>
 
-        <div className="search-box">
+        <div className="search-box" ref={searchBoxRef}>
           <Search size={18} />
 
           <input
@@ -142,25 +154,31 @@ function Navbar({ onMenuClick }) {
             }}
           />
 
-          {employeeSearch.trim() && searchResults.length > 0 && (
+          {employeeSearch.trim() && (
             <div className="employee-search-results">
-              {searchResults.map((employee) => (
-                <button
-                  key={employee._id}
-                  type="button"
-                  className="employee-search-result"
-                  onClick={() => {
-                    setEmployeeSearch("");
-                    setSearchResults([]);
-                    navigate(`/employees/${employee._id}`);
-                  }}
-                >
-                  <strong>{employee.userId?.name || "Unnamed employee"}</strong>
-                  <span>
-                    {employee.employeeId} · {employee.position}
-                  </span>
-                </button>
-              ))}
+              {searchResults.length > 0 ? (
+                searchResults.map((employee) => (
+                  <button
+                    key={employee._id}
+                    type="button"
+                    className="employee-search-result"
+                    onClick={() => {
+                      setEmployeeSearch("");
+                      setSearchResults([]);
+                      navigate(`/employees/${employee._id}`);
+                    }}
+                  >
+                    <strong>
+                      {employee.userId?.name || "Unnamed employee"}
+                    </strong>
+                    <span>
+                      {employee.employeeId} · {employee.position}
+                    </span>
+                  </button>
+                ))
+              ) : (
+                <p className="employee-search-empty">No matching employees</p>
+              )}
             </div>
           )}
         </div>
