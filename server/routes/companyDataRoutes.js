@@ -1,4 +1,3 @@
-
 const express = require("express");
 const router = express.Router();
 
@@ -27,33 +26,55 @@ router.post("/ask", protect, async (req, res) => {
     const userId = req.user.userId;
 
     console.log("Logged-in role:", role);
-console.log("Logged-in userId:", userId);
+    console.log("Logged-in userId:", userId);
 
     const text = question.toLowerCase().trim();
 
-    // Only support employee-count questions in this first version.
     const isEmployeeCountQuestion =
       text.includes("how many") &&
       (text.includes("employee") || text.includes("employees"));
 
-    if (!isEmployeeCountQuestion) {
+    const isMyProfileQuestion =
+      text.includes("my department") ||
+      text.includes("my position") ||
+      text.includes("my profile") ||
+      text.includes("where do i work");
+
+    if (!isEmployeeCountQuestion && !isMyProfileQuestion) {
       return res.json({
         answer:
-          "For now, I can answer questions about the number of employees. More company-data questions will be added step by step.",
+          "I can answer questions about employee counts and your own department or position.",
       });
     }
 
     // Employees can only ask about their own profile.
-    if (role === "employee") {
-      const employee = await Employee.findOne({ userId })
-        .select("_id status");
+   
+if (role === "employee") {
+  const employee = await Employee.findOne({ userId })
+    .select("position department status")
+    .populate("department", "name");
 
-      return res.json({
-        answer: employee
-          ? "Your employee profile is registered in the system."
-          : "Your employee profile was not found.",
-      });
-    }
+  if (!employee) {
+    return res.json({
+      answer: "Your employee profile was not found.",
+    });
+  }
+
+  if (isMyProfileQuestion) {
+    const departmentName = employee.department
+      ? employee.department.name
+      : "Not assigned";
+
+    return res.json({
+      answer: `Your department is ${departmentName}, and your position is ${employee.position}.`,
+    });
+  }
+
+  return res.json({
+    answer: "Your employee profile is registered in the system.",
+  });
+}
+
 
     let employeeFilter = {};
 
@@ -64,7 +85,7 @@ console.log("Logged-in userId:", userId);
       }).select("_id");
 
       const departmentIds = managedDepartments.map(
-        (department) => department._id
+        (department) => department._id,
       );
 
       employeeFilter.department = { $in: departmentIds };
@@ -74,9 +95,7 @@ console.log("Logged-in userId:", userId);
       });
     }
 
-    const totalEmployees = await Employee.countDocuments(
-      employeeFilter
-    );
+    const totalEmployees = await Employee.countDocuments(employeeFilter);
 
     return res.json({
       answer: `There are ${totalEmployees} employee profile(s) within your permitted data access.`,

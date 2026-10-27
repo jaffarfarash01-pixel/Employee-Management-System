@@ -1,8 +1,9 @@
+
 import { useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
+import "../components/style/AddEmployee.css";
 
-function AddEmployee({ onEmployeeAdded }) {
-
+function AddEmployee({ onEmployeeAdded, onClose }) {
   const navigate = useNavigate();
 
   const [departments, setDepartments] = useState([]);
@@ -11,7 +12,6 @@ function AddEmployee({ onEmployeeAdded }) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
-    password: "",
     employeeId: "",
     phone: "",
     department: "",
@@ -19,50 +19,46 @@ function AddEmployee({ onEmployeeAdded }) {
     joiningDate: "",
   });
 
-const fetchDepartments = async () => {
-  const token = localStorage.getItem("token");
+  const fetchDepartments = async () => {
+    const token = localStorage.getItem("token");
 
-  try {
-    const response = await fetch(
-      "http://localhost:5000/api/departments",
-      {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      alert(data.message);
-      return;
-    }
-
-    const user = JSON.parse(localStorage.getItem("user"));
-
-    // Manager → show only their department
-    if (user.role === "manager") {
-      const myDepartments = data.filter(
-        (department) =>
-          department.manager &&
-          department.manager._id === user.id
+    try {
+      const response = await fetch(
+        "http://localhost:5000/api/departments",
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
       );
 
-      setDepartments(myDepartments);
-    } else {
-      // Admin → show all departments
-      setDepartments(data);
+      const data = await response.json();
+
+      if (!response.ok) {
+        alert(data.message);
+        return;
+      }
+
+      const user = JSON.parse(localStorage.getItem("user"));
+
+      if (user?.role === "manager") {
+        const myDepartments = data.filter(
+          (department) =>
+            department.manager &&
+            department.manager._id === user.id
+        );
+
+        setDepartments(myDepartments);
+      } else {
+        setDepartments(data);
+      }
+    } catch (error) {
+      console.error(error);
+      alert("Server connection failed");
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.error(error);
-    alert("Server connection failed");
-  } finally {
-    setLoading(false);
-  }
-};
-
-
+  };
 
   useEffect(() => {
     fetchDepartments();
@@ -75,13 +71,20 @@ const fetchDepartments = async () => {
     });
   };
 
+  const handleClose = () => {
+    if (onClose) {
+      onClose();
+    } else {
+      navigate("/employees");
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
     if (
       !formData.name ||
       !formData.email ||
-      !formData.password ||
       !formData.employeeId ||
       !formData.phone ||
       !formData.department ||
@@ -115,7 +118,6 @@ const fetchDepartments = async () => {
       }
 
       alert("Employee created successfully");
-      navigate("/employees");
 
       if (onEmployeeAdded) {
         onEmployeeAdded();
@@ -124,154 +126,170 @@ const fetchDepartments = async () => {
       setFormData({
         name: "",
         email: "",
-        password: "",
         employeeId: "",
         phone: "",
         department: "",
         position: "",
         joiningDate: "",
       });
+
+      if (onClose) {
+        onClose();
+      } else {
+        navigate("/employees");
+      }
     } catch (error) {
       console.error(error);
       alert("Server connection failed");
     }
   };
 
-  if (loading) {
-    return <p>Loading...</p>;
-  }
-
   return (
-    <div>
-      <h1>Add Employee</h1>
+    <div className="employee-modal-overlay" onMouseDown={(e) => {
+      if (e.target === e.currentTarget) handleClose();
+    }}>
+      <div
+        className="employee-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-employee-title"
+      >
+        <div className="employee-modal-header">
+          <div>
+            <h2 id="add-employee-title">Add Employee</h2>
+            <p>Create a new employee profile</p>
+          </div>
 
-      <form onSubmit={handleSubmit}>
-        {/* Name */}
-        <div>
-          <label>Name</label>
-
-          <input
-            type="text"
-            name="name"
-            value={formData.name}
-            onChange={handleChange}
-            placeholder="Employee name"
-            required
-          />
-        </div>
-
-        {/* Email */}
-        <div>
-          <label>Email</label>
-
-          <input
-            type="email"
-            name="email"
-            value={formData.email}
-            onChange={handleChange}
-            placeholder="employee@gmail.com"
-            required
-          />
-        </div>
-
-        {/* Password */}
-        <div>
-          <label>Password</label>
-
-          <input
-            type="password"
-            name="password"
-            value={formData.password}
-            onChange={handleChange}
-            placeholder="Enter password"
-            required
-          />
-        </div>
-
-        {/* Employee ID */}
-        <div>
-          <label>Employee ID</label>
-
-          <input
-            type="text"
-            name="employeeId"
-            value={formData.employeeId}
-            onChange={handleChange}
-            placeholder="EMP005"
-            required
-          />
-        </div>
-
-        {/* Phone */}
-        <div>
-          <label>Phone</label>
-
-          <input
-            type="text"
-            name="phone"
-            value={formData.phone}
-            onChange={handleChange}
-            placeholder="9876543210"
-            required
-          />
-        </div>
-
-        {/* Department */}
-        <div>
-          <label>Select Department</label>
-
-          <select
-            name="department"
-            value={formData.department}
-            onChange={handleChange}
-            required
+          <button
+            type="button"
+            className="employee-modal-close"
+            onClick={handleClose}
+            aria-label="Close"
           >
-            <option value="">
-              Select Department
-            </option>
+            ×
+          </button>
+        </div>
 
-            {departments.map((department) => (
-              <option
-                key={department._id}
-                value={department._id}
+        {loading ? (
+          <p className="employee-modal-loading">
+            Loading departments...
+          </p>
+        ) : (
+          <form className="employee-modal-form" onSubmit={handleSubmit}>
+            <div className="employee-form-grid">
+              <div className="employee-form-field">
+                <label htmlFor="employee-name">Full name</label>
+                <input
+                  id="employee-name"
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleChange}
+                  placeholder="Employee name"
+                  required
+                />
+              </div>
+
+              <div className="employee-form-field">
+                <label htmlFor="employee-id">Employee ID</label>
+                <input
+                  id="employee-id"
+                  type="text"
+                  name="employeeId"
+                  value={formData.employeeId}
+                  onChange={handleChange}
+                  placeholder="EMP005"
+                  required
+                />
+              </div>
+
+              <div className="employee-form-field">
+                <label htmlFor="employee-email">Email address</label>
+                <input
+                  id="employee-email"
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="employee@gmail.com"
+                  required
+                />
+              </div>
+
+              <div className="employee-form-field">
+                <label htmlFor="employee-phone">Phone number</label>
+                <input
+                  id="employee-phone"
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  placeholder="9876543210"
+                  required
+                />
+              </div>
+
+
+              <div className="employee-form-field">
+                <label htmlFor="employee-department">Department</label>
+                <select
+                  id="employee-department"
+                  name="department"
+                  value={formData.department}
+                  onChange={handleChange}
+                  required
+                >
+                  <option value="">Select department</option>
+                  {departments.map((department) => (
+                    <option key={department._id} value={department._id}>
+                      {department.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="employee-form-field">
+                <label htmlFor="employee-position">Position</label>
+                <input
+                  id="employee-position"
+                  type="text"
+                  name="position"
+                  value={formData.position}
+                  onChange={handleChange}
+                  placeholder="Frontend Developer"
+                  required
+                />
+              </div>
+
+              <div className="employee-form-field">
+                <label htmlFor="employee-joining-date">Joining date</label>
+                <input
+                  id="employee-joining-date"
+                  type="date"
+                  name="joiningDate"
+                  value={formData.joiningDate}
+                  onChange={handleChange}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="employee-modal-actions">
+              <button
+                type="button"
+                className="employee-cancel-button"
+                onClick={handleClose}
               >
-                {department.name}
-              </option>
-            ))}
-          </select>
-        </div>
+                Cancel
+              </button>
 
-        {/* Position */}
-        <div>
-          <label>Position</label>
-
-          <input
-            type="text"
-            name="position"
-            value={formData.position}
-            onChange={handleChange}
-            placeholder="Frontend Developer"
-            required
-          />
-        </div>
-
-        {/* Joining Date */}
-        <div>
-          <label>Joining Date</label>
-
-          <input
-            type="date"
-            name="joiningDate"
-            value={formData.joiningDate}
-            onChange={handleChange}
-            required
-          />
-        </div>
-
-        <button type="submit">
-          Add Employee
-        </button>
-      </form>
+              <button type="submit" className="employee-submit-button">
+                Add Employee
+              </button>
+            </div>
+          </form>
+        )}
+      </div>
     </div>
   );
 }

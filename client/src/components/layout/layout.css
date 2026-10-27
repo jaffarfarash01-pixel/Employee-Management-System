@@ -2384,3 +2384,227 @@
   margin-top: 8px;
   cursor: pointer;
 }
+
+/* =========================================
+   PROFESSIONAL TEAL DASHBOARD THEME
+   Added overrides - preserves existing layout
+========================================= */
+
+:root {
+  --brand-teal: #365963;
+  --brand-teal-dark: #294750;
+  --brand-blue: #3b82f6;
+  --page-bg: #e8ecee;
+  --card-bg: #ffffff;
+  --text-primary: #24343a;
+  --text-secondary: #64748b;
+  --border-color: #dce3e6;
+}
+
+/* Main background */
+.app-layout {
+  background: var(--page-bg);
+  color: var(--text-primary);
+}
+
+/* Sidebar */
+.sidebar {
+  background: var(--brand-teal);
+  border-right: none;
+  color: #ffffff;
+  box-shadow: 2px 0 12px rgba(24, 45, 52, 0.08);
+}
+
+.sidebar-logo {
+  border-bottom: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.logo-icon {
+  background: #ffffff;
+  color: var(--brand-teal);
+}
+
+.logo-text strong,
+.logo-text span {
+  color: #ffffff;
+}
+
+.sidebar-section-title {
+  color: #c4d5d9;
+}
+
+.sidebar-link {
+  color: #edf4f5;
+  border-radius: 7px;
+  transition: background 0.2s ease, color 0.2s ease;
+}
+
+.sidebar-link:hover,
+.sidebar-submenu a:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+.sidebar-link.active {
+  background: #ffffff;
+  color: var(--brand-teal);
+  font-weight: 600;
+}
+
+.sidebar-submenu a {
+  color: #e0ebed;
+}
+
+.sidebar-submenu a.active {
+  background: rgba(255, 255, 255, 0.14);
+  color: #ffffff;
+}
+
+.sidebar-bottom {
+  border-top: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.logout-button {
+  color: #ffe1df;
+}
+
+.logout-button:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+/* Navbar */
+.navbar {
+  background: var(--brand-teal);
+  border-bottom: none;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(24, 45, 52, 0.08);
+}
+
+.menu-button,
+.notification-button {
+  color: #ffffff;
+}
+
+.menu-button:hover,
+.notification-button:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.profile-button:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.profile-info strong,
+.profile-info span {
+  color: #ffffff;
+}
+
+.profile-avatar {
+  background: #ffffff;
+  color: var(--brand-teal);
+}
+
+/* Keep dropdowns readable against the teal navbar */
+.profile-dropdown {
+  background: #ffffff;
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+.profile-dropdown button {
+  color: #475569;
+}
+
+.profile-dropdown button:hover {
+  background: #edf3f4;
+}
+
+.dropdown-divider {
+  background: var(--border-color);
+}
+
+/* Main page spacing and background */
+.main-area {
+  background: var(--page-bg);
+}
+
+.page-content {
+  color: var(--text-primary);
+}
+
+/* Dashboard headings */
+.dashboard-header h1,
+.section-header h2,
+.stat-value {
+  color: var(--text-primary);
+}
+
+/* White cards */
+.stat-card,
+.dashboard-section {
+  background: var(--card-bg);
+  border-color: var(--border-color);
+  border-radius: 12px;
+  box-shadow: 0 2px 5px rgba(35, 55, 62, 0.05);
+}
+
+.stat-card:hover {
+  box-shadow: 0 8px 20px rgba(35, 55, 62, 0.1);
+}
+
+/* Teal and blue accents */
+.stat-icon,
+.activity-icon {
+  background: #e5eff1;
+  color: var(--brand-teal);
+}
+
+.dashboard-date {
+  border-color: var(--border-color);
+}
+
+/* Tables */
+.attendance-table th {
+  background: #f0f4f5;
+  color: #43575e;
+}
+
+.attendance-table td {
+  border-bottom-color: #edf0f1;
+}
+
+.attendance-table tbody tr:hover {
+  background: #f4f7f8;
+}
+
+/* Search dropdown */
+.employee-search-results {
+  background: #ffffff;
+  color: var(--text-primary);
+  border-color: var(--border-color);
+}
+
+.employee-search-result {
+  border-bottom-color: #edf0f1;
+}
+
+.employee-search-result:hover {
+  background: #f0f5f6;
+}
+
+/* Consistent keyboard focus */
+.sidebar-link:focus-visible,
+.menu-button:focus-visible,
+.notification-button:focus-visible,
+.profile-button:focus-visible {
+  outline: 2px solid var(--brand-blue);
+  outline-offset: 2px;
+}
+
+/* Mobile sidebar overlay */
+@media (max-width: 768px) {
+  .sidebar-overlay {
+    background: rgba(18, 37, 43, 0.48);
+  }
+}
